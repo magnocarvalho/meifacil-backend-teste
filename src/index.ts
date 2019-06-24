@@ -1,7 +1,7 @@
 import express from 'express';
 import  mongoose from 'mongoose';
 import bodyParser from 'body-parser';
-import routes from './routes/rotas';
+import routes from './routes/Rotas';
 
 var app = express();
 
@@ -23,7 +23,7 @@ app.options('*', function (req, res, next) {
         res.sendStatus(200);
 });
 
-app.use('/api', routes);
+app.use('/', routes);
 
 app.use(function (req, res, next) {
     let err: any;

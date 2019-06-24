@@ -29,10 +29,11 @@ gulp.task('server', function(done) {
         ,done: done
     }); 
     return stream.on('restart', function () {
-        console.log('restarted!');
+        console.log('Reiniciando =)\n');
+        // gulp.series('clean');//limpa o bin
       })
       .on('crash', function() {
-        console.error('Application has crashed!\n')
+        console.error('Erro na API!\n')
          stream.emit('restart', 10);  // restart the server in 10 seconds
       });
 });
