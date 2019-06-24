@@ -4,7 +4,7 @@ import * as mongoose from 'mongoose';
 import { Double } from 'bson';
 
 
-export interface IPagamentoModel extends IDefault, mongoose.Document{
+export interface IContaCorrenteModel extends IDefault, mongoose.Document{
     id: string;
     saldo: Double;
     titular: string;
@@ -16,5 +16,5 @@ let schema = {
 };
 
 Inject(schema);
-export const PagamentoMasterSchema = new mongoose.Schema(schema);
-export const PagamentoModel = mongoose.model<IPagamentoModel>('Pagamento', PagamentoMasterSchema, 'pagamento', false);
+export const ContaCorrenteMasterSchema = new mongoose.Schema(schema);
+export const ContaCorrenteModel = mongoose.model<IContaCorrenteModel>('contacorrente', ContaCorrenteMasterSchema, 'contacorrente', false);

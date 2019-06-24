@@ -8,16 +8,16 @@ export interface IPagamentoModel extends IDefault, mongoose.Document{
     pagador:string;
     recebedor:string;
     valor:Double;
-    parcelar: Int32;
+    parcelas: Int32;
 }
 
 let schema = {
-    pagador: {type: mongoose.Schema.Types.ObjectId, ref: 'Conta', required: true},
-    recebedor: {type: mongoose.Schema.Types.ObjectId, ref: 'Conta', required: true},
+    pagador: {type: mongoose.Schema.Types.ObjectId, ref: 'contacorrente', required: true},
+    recebedor: {type: mongoose.Schema.Types.ObjectId, ref: 'contacorrente', required: true},
     valor: {type: Double, required: true},
     parcelas: {type: Int32, required: true}
 };
 
 Inject(schema);
 export const PagamentoMasterSchema = new mongoose.Schema(schema);
-export const PagamentoModel = mongoose.model<IPagamentoModel>('Pagamento', PagamentoMasterSchema, 'pagamento', false);
+export const PagamentoModel = mongoose.model<IPagamentoModel>('pagamento', PagamentoMasterSchema, 'pagamento', false);
