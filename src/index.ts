@@ -1,5 +1,5 @@
 import express from 'express';
-import  mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import routes from './routes/Rotas';
 
@@ -8,7 +8,9 @@ var app = express();
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-mongoose.connect('mongodb://localhost:27017/meifacil');
+mongoose.set('useFindAndModify', false); // bibliotec depreciada
+mongoose.connect('mongodb://localhost:27017/meifacil', { useNewUrlParser: true });
+
 
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,13 +34,29 @@ app.use(function (req, res, next) {
     next(err);
 });
 
-app.use(function (err: { status: any; message: any; }, req: any, res: { status: (arg0: any) => void; json: (arg0: { message: any; error: {}; }) => void; }, next: any) {
+app.use(function (err, res, req, next) {
     res.status(err.status || 500);
     res.json({
         message: err.message,
-        error: {}
+        error: err.status
     });
 });
+app.use((err, req, res, next) => {
+    res.status(err.status || 500).json({
+      message: err.message || "Something went wrong. Please try again",
+      status: err.status || 500
+    });
+  });
+
+if (app.get('env') === 'development') {
+    app.use(function (err, req, res, next) {
+        res.status(err.status || 500);
+        res.json({
+            message: err.message,
+            error: err
+        });
+    });
+}
 
 var port = 1337;
 app.listen(port);

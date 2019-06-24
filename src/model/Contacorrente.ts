@@ -3,15 +3,15 @@ import { IDefault, Inject } from './IDefault';
 import * as mongoose from 'mongoose';
 import { Double, Decimal128 } from 'bson';
 
-export interface IContaCorrenteModel extends IDefault, mongoose.Document{
+export interface IContaCorrenteModel extends IDefault, mongoose.Document {
     id: string;
     saldo: Double;
     titular: string;
 }
 
 let schema = {
-   saldo: {type: Decimal128, required: true},
-   titular: {type: String,  required: true}
+    saldo: { type: Decimal128, required: true },
+    titular: { type: String, required: true }
 };
 
 Inject(schema);
