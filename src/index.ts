@@ -1,6 +1,6 @@
 import express from 'express';
-import * as mongoose from 'mongoose';
-import * as bodyParser from 'body-parser';
+import  mongoose from 'mongoose';
+import bodyParser from 'body-parser';
 import routes from './routes/rotas';
 
 var app = express();
