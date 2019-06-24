@@ -23,16 +23,15 @@ class ContaCorrenteCtrl {
     );
   }
   static realizarPagamento(obj: any) {
+    var lancamento: any = { pagador: obj.pagador._id };
+    var liquido = Number(obj.valorLiquido);
+    var pagador: IContaCorrenteModel = obj.pagador;
+    pagador.saldo = Number(pagador.saldo) - liquido;
+
     return new Promise<any>((resolve, reject) => {
-      var lancamento: any = { pagador: obj.pagador._id };
-      var liquido = Number(obj.valorLiquido);
-      var pagador: IContaCorrenteModel = obj.pagador;
-      pagador.saldo = Number(pagador.saldo) - liquido;
       ContaCorrenteCtrl.getByIdDescontar(pagador.id, pagador).then(desconto => {
         resolve({ saldoPagador: Number(desconto.saldo), pagador: desconto._id });
-      }, erroDesconto => {
-        reject(erroDesconto);
-      })
+      });
     })
   }
   public static getById(id: any) {
@@ -51,7 +50,6 @@ class ContaCorrenteCtrl {
       ContaCorrenteModel.findByIdAndUpdate(id, obj, (err, data) => {
         if (err || data === null) reject(err);
         else {
-          console.error(data);
           resolve(data);
         }
       });

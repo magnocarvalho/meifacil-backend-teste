@@ -10,68 +10,75 @@ class PagamentoCtrl {
 
   static create(req, res, next) {
     var obj: IPagamentoModel = req.body;
-    var pagamento: any = { valor: obj.valor, parcelas: obj.parcelas };
+    var pagamento: any = { valor: obj.valor, parcelas: obj.parcelas, pagante: obj.pagador, recebendo: obj.recebedor };
     var retorno = {};
-    //inicio da conexão com o banco de dados 
+    //validando dados de entrada antes de acessar o banco de dados
     var testeDados = PagamentoCtrl.validarDados(obj);
     if (testeDados.Erro) {
       next(testeDados.Erro);
     }
 
-    //validando dados de entrada antes de acessar o banco de dados
-    // res.setHeader('Content-Type', 'application/json');
+    //inicio da conexão com o banco de dados 
+    let passos = [async.apply(PagamentoCtrl.getPagador, pagamento),
+    PagamentoCtrl.getRecebedor,
+    PagamentoCtrl.getCalculos,
+    PagamentoCtrl.realizarPagamento];
+    try {
+      async.waterfall(passos,
+        (err, data) => {
+          if (err) {
+            console.log(err);
+            next(err);
+          }
+          else {
+            res.json(data);
+            // console.error(data);
+            // console.log(res);
+            // retorno.ok = true;
+            // res.sendStatus(200)
+            //   .json(data)
+            //   .send()
+            //   .end();
+          }
+        });
+    } catch (error) {
+      console.error(error);
+    }
 
-    async.series([
-      function getPagador(done) {
-        ContaCorrenteCtrl.getById(obj.pagador).then(pagador => {
-          pagamento.pagador = pagador;
-          done(null, pagamento);
-        }).catch(err => {
-          next(err);
-          throw new Error(err);
-        });
-      },
-      function getRecebedor(done) {
-        ContaCorrenteCtrl.getById(obj.recebedor).then(recebedor => {
-          pagamento.recebedor = recebedor;
-          done(null, pagamento);
-        }).catch(err => {
-          next(err);
-          throw new Error(err);
-        });
-      },
-
-      function getCalculos(done) {
-        PagamentoCtrl.compararSaldos(pagamento).then(juros => {
-          pagamento.valorLiquido = juros;
-          done(null, pagamento);
-        }).catch(err => {
-          next(err);
-          throw new Error(err);
-        });
-      },
-      function realizarPagamento(done) {
-        ContaCorrenteCtrl.realizarPagamento(pagamento).then(sucesso => {
-          retorno = sucesso;
-          res.json(retorno);
-          done(null, pagamento);
-        }).catch(err => {
-          next(err);
-          throw new Error(err);
-        });
-      }
-    ],
-      function (err) {
-        if (err) {
-          next(err);
-          throw new Error(err.message);
-        } else {
-          console.log('Todas as transaçoes OK!');
-         
-        }
-      });
   };
-
+  public static getPagador(pag, callback) {
+    ContaCorrenteCtrl.getById(pag.pagante).then(pagador => {
+      pag.pagador = pagador;
+      callback(null, pag);
+    }).catch(erro => {
+      callback(erro);
+    });
+  }
+  public static getRecebedor(pag, callback) {
+    ContaCorrenteCtrl.getById(pag.recebendo).then(recebedor => {
+      pag.recebedor = recebedor;
+      callback(null, pag);
+    }).catch(erro => {
+      callback(erro);
+    });
+  }
+  public static getCalculos(pag, callback) {
+    PagamentoCtrl.compararSaldos(pag).then(juros => {
+      pag.valorLiquido = juros;
+      callback(null, pag);
+    }).catch(erro => {
+      callback(erro);
+    });
+  }
+  public static realizarPagamento(pag, callback) {
+    ContaCorrenteCtrl.realizarPagamento(pag).then(sucesso => {
+      pag.sucesso = sucesso;
+      if (sucesso)
+        callback(null, pag);
+      else
+        callback('Erro ao realizar pagamento', null);
+    });
+  }
 
   private static validarIDContaCorrente(id: string): boolean {
     //objectID do mongo db possui 24 caracteres 

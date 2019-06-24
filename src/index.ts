@@ -16,12 +16,13 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Method', 'PUT, POST, DELETE, GET');
     res.setHeader('Access-Control-Allow-Methods', 'PUT, POST, DELETE, GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-access-token');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, x-access-token');
     next();
 });
 
 app.options('*', function (req, res, next) {
     if (req.method == 'OPTIONS')
+        // res.status(200);
         res.sendStatus(200);
 });
 
@@ -34,13 +35,13 @@ app.use(function (req, res, next) {
     next(err);
 });
 
-app.use(function (err, res, req, next) {
-    res.status(err.status || 500);
-    res.json({
-        message: err.message,
-        error: err.status
-    });
-});
+// app.use(function (err, res, req, next) {
+//     res.status(err.status || 500);
+//     res.json({
+//         message: err.message,
+//         error: err.status
+//     });
+// });
 app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
       message: err.message || "Something went wrong. Please try again",
