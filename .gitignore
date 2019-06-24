@@ -99,3 +99,5 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+# bin - Pasta de build da aplicação
+bin/
