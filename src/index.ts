@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import routes from './routes/Rotas';
+import PagamentoCtrl from './controllers/PagamentoCtrl';
 
 var app = express();
 
@@ -16,7 +17,7 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Method', 'PUT, POST, DELETE, GET');
     res.setHeader('Access-Control-Allow-Methods', 'PUT, POST, DELETE, GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, x-access-token');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept');
     next();
 });
 
@@ -24,6 +25,7 @@ app.options('*', function (req, res, next) {
     if (req.method == 'OPTIONS')
         // res.status(200);
         res.sendStatus(200);
+
 });
 
 app.use('/', routes);
@@ -44,10 +46,10 @@ app.use(function (req, res, next) {
 // });
 app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
-      message: err.message || "Something went wrong. Please try again",
-      status: err.status || 500
+        message: err.message || "Something went wrong. Please try again",
+        status: err.status || 500
     });
-  });
+});
 
 if (app.get('env') === 'development') {
     app.use(function (err, req, res, next) {
@@ -61,3 +63,11 @@ if (app.get('env') === 'development') {
 
 var port = 1337;
 app.listen(port);
+
+var retorono = PagamentoCtrl.verificarSaldo({
+    pagador: "5d10b24219b28e2aa0eecde0",
+    recebedor: "5d10b24a19b28e2aa0eecde1",
+    valor: "10",
+    parcelas: 1
+});
+console.log(retorono);

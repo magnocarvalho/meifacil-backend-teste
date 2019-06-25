@@ -1,9 +1,11 @@
-import { IPagamentoModel } from "../model/Pagamento";
+import { IPagamentoModel, PagamentoModel } from "../model/Pagamento";
 import * as async from 'async';
 import ContaCorrenteCtrl from "./ContaCorrenteCtrl";
 import { IContaCorrenteModel } from "../model/Contacorrente";
 import { Double, Int32 } from "bson";
 import Utils from "../utils/Utils";
+import { readdirSync } from "fs";
+import { response } from "express";
 // import { ServerResponse } from "http";
 class PagamentoCtrl {
 
@@ -17,63 +19,104 @@ class PagamentoCtrl {
     if (testeDados.Erro) {
       next(testeDados.Erro);
     }
-
-    //inicio da conexão com o banco de dados 
-    let passos = [async.apply(PagamentoCtrl.getPagador, pagamento),
-    PagamentoCtrl.getRecebedor,
-    PagamentoCtrl.getCalculos,
-    PagamentoCtrl.realizarPagamento];
+    // PagamentoCtrl.verificarSaldo(pagamento).then();
+  };
+  public static verificarSaldo(pagamento) {
     try {
-      async.waterfall(passos,
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            next(err);
+
+      PagamentoModel.aggregate([
+        {
+          $lookup: {
+            from: "contacorrente",
+            localField: pagamento.pagador,
+            foreignField: "_id",
+            as: "contacorrente"
           }
-          else {
-            res.json(data);
-            // console.error(data);
-            // console.log(res);
-            // retorno.ok = true;
-            // res.sendStatus(200)
-            //   .json(data)
-            //   .send()
-            //   .end();
-          }
-        });
+
+        },
+        {
+          unwind: "$contacorrente"
+        }
+
+      ]).exec((err, lancamento) => {
+        if (err) {
+          return ({ code: "erro lancamento", error: err });
+        }
+        return (lancamento);
+      });
     } catch (error) {
       console.error(error);
     }
 
+
   };
+
+
+
+  // //inicio da conexão com o banco de dados 
+  // let passos = [async.apply(PagamentoCtrl.getPagador, pagamento),
+  // PagamentoCtrl.getRecebedor,
+  // PagamentoCtrl.getCalculos,
+  // PagamentoCtrl.realizarPagamento];
+  // try {
+  //   async.waterfall(passos,
+  //     (err, data) => {
+  //       if (err) {
+  //         console.log(err);
+  //         next(err);
+  //       }
+  //       else {
+  //         response.json(data);
+  //        // console.error(data);
+  //         // console.log(res);
+  //         // retorno.ok = true;
+  //         // res.sendStatus(200)
+  //         //   .json(data)
+  //         //   .send()
+  //         //   .end();
+  //       }
+  //     });
+  // } catch (error) {
+  //   console.error(error);
+  // }
+
+  // };
   public static getPagador(pag, callback) {
     ContaCorrenteCtrl.getById(pag.pagante).then(pagador => {
       pag.pagador = pagador;
-      callback(null, pag);
-    }).catch(erro => {
-      callback(erro);
+      if (pagador)
+        callback(null, pag);
+      else
+        callback("Erro ao buscar pagador", null);
     });
   }
   public static getRecebedor(pag, callback) {
     ContaCorrenteCtrl.getById(pag.recebendo).then(recebedor => {
       pag.recebedor = recebedor;
-      callback(null, pag);
-    }).catch(erro => {
-      callback(erro);
+      if (recebedor)
+        callback(null, pag);
+      else
+        callback("Erro ao buscar recebedor", null);
     });
   }
   public static getCalculos(pag, callback) {
     PagamentoCtrl.compararSaldos(pag).then(juros => {
       pag.valorLiquido = juros;
-      callback(null, pag);
-    }).catch(erro => {
-      callback(erro);
+      if (juros)
+        callback(null, pag);
+      else
+        callback("Erro ao processar juros", null);
     });
   }
   public static realizarPagamento(pag, callback) {
-    ContaCorrenteCtrl.realizarPagamento(pag).then(sucesso => {
-      pag.sucesso = sucesso;
-      if (sucesso)
+    var lancamento: any = { pagador: pag.pagador._id };
+    var liquido = Number(pag.valorLiquido);
+    var pagador: IContaCorrenteModel = pag.pagador;
+    pagador.saldo = Number(pagador.saldo) - liquido;
+    ContaCorrenteCtrl.getByIdDescontar(pagador.id, pagador).then(desconto => {
+      lancamento = { saldoPagador: Number(desconto.saldo), pagador: desconto._id };
+      pag.sucesso = desconto;
+      if (desconto)
         callback(null, pag);
       else
         callback('Erro ao realizar pagamento', null);

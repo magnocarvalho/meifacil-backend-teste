@@ -22,18 +22,6 @@ class ContaCorrenteCtrl {
       }
     );
   }
-  static realizarPagamento(obj: any) {
-    var lancamento: any = { pagador: obj.pagador._id };
-    var liquido = Number(obj.valorLiquido);
-    var pagador: IContaCorrenteModel = obj.pagador;
-    pagador.saldo = Number(pagador.saldo) - liquido;
-
-    return new Promise<any>((resolve, reject) => {
-      ContaCorrenteCtrl.getByIdDescontar(pagador.id, pagador).then(desconto => {
-        resolve({ saldoPagador: Number(desconto.saldo), pagador: desconto._id });
-      });
-    })
-  }
   public static getById(id: any) {
     return new Promise<IContaCorrenteModel>((resolve, reject) => {
       ContaCorrenteModel.findOne({ isDeleted: false, _id: id }, (err, data) => {
