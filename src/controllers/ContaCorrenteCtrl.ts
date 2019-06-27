@@ -44,7 +44,7 @@ class ContaCorrenteCtrl {
   }
   public static getByIdPagar(id: any, obj: any) {
     return new Promise<IContaCorrenteModel>((resolve, reject) => {
-      ContaCorrenteModel.findOneAndUpdate({ isDeleted: false, _id: id }, obj, (err, data) => {
+      ContaCorrenteModel.findByIdAndUpdate( id , obj, (err, data) => {
         if (err || data === null) reject(err);
         else {
           resolve(data);

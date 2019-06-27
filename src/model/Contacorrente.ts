@@ -1,7 +1,7 @@
 
 import { IDefault, Inject } from './IDefault';
 import * as mongoose from 'mongoose';
-import { Double, Decimal128 } from 'bson';
+// import { Double, Decimal128 } from 'bson';
 
 export interface IContaCorrenteModel extends IDefault, mongoose.Document {
     id: string;

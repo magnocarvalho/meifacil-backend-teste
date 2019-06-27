@@ -1,9 +1,11 @@
 import { IPagamentoModel, PagamentoModel } from "../model/Pagamento";
 import * as async from 'async';
 import ContaCorrenteCtrl from "./ContaCorrenteCtrl";
-import { IContaCorrenteModel, ContaCorrenteModel } from "../model/Contacorrente";
-import { Double, Int32, Decimal128 } from "bson";
+import { IContaCorrenteModel } from "../model/Contacorrente";
+import { Double, Int32 } from "bson";
 import Utils from "../utils/Utils";
+import { ILancamentoModel, LancamentoModel } from "../model/Lancamento";
+import LancamentoCtrl from "./LancamentosCtrl";
 const Transaction = require('mongoose-transactions')
 const transaction = new Transaction();
 
@@ -13,7 +15,6 @@ class PagamentoCtrl {
   static create(req, res, next) {
     var obj: IPagamentoModel = req.body;
     var pagamento: any = { valor: obj.valor, parcelas: obj.parcelas, pagante: obj.pagador, recebendo: obj.recebedor };
-    // var retorno = {};
     //validando dados de entrada antes de acessar o banco de dados
     var testeDados = PagamentoCtrl.validarDados(obj);
     if (testeDados.Erro) {
@@ -22,23 +23,26 @@ class PagamentoCtrl {
       let passos = [async.apply(PagamentoCtrl.getPagador, pagamento),
       PagamentoCtrl.getRecebedor,
       PagamentoCtrl.getCalculos,
-      PagamentoCtrl.realizarPagamento
+      PagamentoCtrl.realizarPagamento,
+      PagamentoCtrl.salvaPagamento,
+      PagamentoCtrl.salvaLancamento
       ];
       try {
         async.waterfall(passos,
-          (err, data) => {
+          (err, data: any) => {
             if (err) {
-              console.log(err);
+              //console.log(err);
               next(err);
             }
             else {
-              res.json(data);
+              var retorno = { saldoOrigem: data.loglancamento.saldoPagador, saldoSaida: data.loglancamento.saldoRecebedor, status: 200, valorLiquido: data.valorLiquido };
+              res.json(retorno);
 
             }
           });
       } catch (error) {
-        console.log("Try catch");
-        console.error(error);
+        //console.log("Try catch");
+        //console.error(error);
         next(error);
       }
     }
@@ -63,7 +67,6 @@ class PagamentoCtrl {
     });
   }
   public static getCalculos(pag, callback) {
-    // var pagaador: IContaCorrenteModel = pag.pagador;
     PagamentoCtrl.compararSaldos(pag).then(juros => {
       pag.valorLiquido = juros;
       if (juros)
@@ -72,34 +75,65 @@ class PagamentoCtrl {
         callback("Erro ao processar juros", null);
     });
   }
+  public static salvaLancamento(pag, callback) {
+    //console.log(pag);
+    LancamentoModel.create(pag.lancamento, (err: any, data: any) => {
+      if (err) callback(err, null);
+      else {
+        pag.loglancamento = data
+        callback(null, pag);
+      }
+    });
+  }
+  public static salvaPagamento(pag, callback) {
+    PagamentoModel.create(pag.logpagamento, (err: any, data: any) => {
+      if (err) callback(err, null);
+      else {
+        pag.log = data;
+        callback(null, pag);
+      }
+    });
+  }
+
   public static realizarPagamento(pag, callback) {
-    var lancamento: any = { pagador: pag.pagador._id };
     var liquido = Number(pag.valorLiquido);
     var pagador: IContaCorrenteModel = pag.pagador;
     var recebedor: IContaCorrenteModel = pag.recebedor;
+    // retira e adiciona dinheiro
     pagador.saldo = Number(pagador.saldo) - liquido;
-    ver varias = {};
-    console.log(pagador);
-
+    recebedor.saldo = Number(recebedor.saldo) + liquido;
+    var lancamento: any = {
+      saldoPagador: pagador.saldo, saldoRecebedor: recebedor.saldo,
+      valorTotal: liquido, pagador: pagador._id, recebedor: recebedor._id, parcelas: pag.parcelas
+    };
+    var requisicao: any = {
+      pagador: pagador._id, recebedor: recebedor._id, parcelas: pag.parcelas, valor: pag.valor
+    };
+    var varias = {};
     async function start() {
       try {
-        transaction.update(ContaCorrenteModel.findOneAndUpdate(pagador.id, pagador), (err, data) => {
-          if (err || data === null) callback(err, err);
+        transaction.update("contacorrente", pagador.id, pagador), (err, pago) => {
+          if (err || pago === null) callback(err, err);
           else {
-            callback(null, data);
+            varias = (pago);
           }
-        });
-        transaction.update(ContaCorrenteModel.findByIdAndRemove(recebedor.id, varias), (err, data) => {
-          if (err || data === null) callback(err, err);
+        };
+        transaction.update("contacorrente", recebedor.id, recebedor), (err, recebido) => {
+          if (err || recebido === null) callback(err, err);
           else {
-            callback(null, data);
+            varias = (recebido);
           }
-        });
-        const final = await transaction.run()
+        };
+
+        var final = await transaction.run();
+        pag.transacoes = final;
+        pag.lancamento = lancamento;
+        pag.logpagamento = requisicao;
         callback(null, pag);
+
       } catch (error) {
-        console.error(error)
-        const rollbackObj = await transaction.rollback().catch(console.error);
+
+        const rollbackObj = await transaction.rollback().catch();
         // Erro ao realizar pagamento', null);
         callback(error, null);
         transaction.clean()

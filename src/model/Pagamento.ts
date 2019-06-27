@@ -1,21 +1,21 @@
 
 import { IDefault, Inject } from './IDefault';
 import * as mongoose from 'mongoose';
-import { Double, Int32, Decimal128 } from 'bson';
+// import { Number } from 'bson';
 
-export interface IPagamentoModel extends IDefault, mongoose.Document{
+export interface IPagamentoModel extends IDefault, mongoose.Document {
     id: string;
-    pagador:string;
-    recebedor:string;
-    valor:Double;
-    parcelas: Number;
+    pagador: string;
+    recebedor: string;
+    valor: Number;
+    parcelas: string;
 }
 
 let schema = {
-    pagador: {type: mongoose.Schema.Types.ObjectId, ref: 'contacorrente', required: true},
-    recebedor: {type: mongoose.Schema.Types.ObjectId, ref: 'contacorrente', required: true},
-    valor: {type: Decimal128, required: true},
-    parcelas: {type: Number, required: true}
+    pagador: { type: mongoose.Schema.Types.ObjectId, ref: 'contacorrente', required: true },
+    recebedor: { type: mongoose.Schema.Types.ObjectId, ref: 'contacorrente', required: true },
+    valor: { type: Number, required: true },
+    parcelas: { type: String, required: true }
 };
 
 Inject(schema);

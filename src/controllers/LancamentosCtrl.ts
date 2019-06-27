@@ -8,5 +8,6 @@ class LancamentoCtrl{
           else res.json(data);
         });
       }
+     
 }
 export default LancamentoCtrl;
