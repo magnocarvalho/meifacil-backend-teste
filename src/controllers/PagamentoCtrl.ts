@@ -1,12 +1,12 @@
 import { IPagamentoModel, PagamentoModel } from "../model/Pagamento";
 import * as async from 'async';
 import ContaCorrenteCtrl from "./ContaCorrenteCtrl";
-import { IContaCorrenteModel } from "../model/Contacorrente";
+import { IContaCorrenteModel, ContaCorrenteModel } from "../model/Contacorrente";
 import { Double, Int32, Decimal128 } from "bson";
 import Utils from "../utils/Utils";
-import { readdirSync } from "fs";
-import { response } from "express";
-// import { ServerResponse } from "http";
+const Transaction = require('mongoose-transactions')
+const transaction = new Transaction();
+
 class PagamentoCtrl {
 
 
@@ -78,20 +78,35 @@ class PagamentoCtrl {
     var pagador: IContaCorrenteModel = pag.pagador;
     var recebedor: IContaCorrenteModel = pag.recebedor;
     pagador.saldo = Number(pagador.saldo) - liquido;
-    ContaCorrenteCtrl.getByIdDescontar(pagador.id, pagador).then(desconto => {
-      lancamento = { saldoPagador: desconto.saldo, pagador: desconto._id };
-      pag.sucesso = desconto;
-      ContaCorrenteCtrl.getByIdPagar(recebedor.id, recebedor).then(pagamento => {
-        lancamento = { saldoRecebedor: pagamento.saldo, recebedor: recebedor._id }
-        if (desconto)
-          callback(null, pag);
-      }).catch((erroCredito) => {
-        console.log(erroCredito);
-        callback('Erro ao realizar pagamento', null);
-      })
-    }).catch(erroDesconto => {
-      console.error(erroDesconto);
-    });
+    ver varias = {};
+    console.log(pagador);
+
+    async function start() {
+      try {
+        transaction.update(ContaCorrenteModel.findOneAndUpdate(pagador.id, pagador), (err, data) => {
+          if (err || data === null) callback(err, err);
+          else {
+            callback(null, data);
+          }
+        });
+        transaction.update(ContaCorrenteModel.findByIdAndRemove(recebedor.id, varias), (err, data) => {
+          if (err || data === null) callback(err, err);
+          else {
+            callback(null, data);
+          }
+        });
+        const final = await transaction.run()
+        callback(null, pag);
+      } catch (error) {
+        console.error(error)
+        const rollbackObj = await transaction.rollback().catch(console.error);
+        // Erro ao realizar pagamento', null);
+        callback(error, null);
+        transaction.clean()
+      }
+    }
+
+    start()
   }
 
   private static validarIDContaCorrente(id: string): boolean {
