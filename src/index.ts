@@ -37,13 +37,6 @@ app.use(function (req, res, next) {
     next(err);
 });
 
-// app.use(function (err, res, req, next) {
-//     res.status(err.status || 500);
-//     res.json({
-//         message: err.message,
-//         error: err.status
-//     });
-// });
 app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         message: err.message || "Something went wrong. Please try again",
@@ -63,11 +56,3 @@ if (app.get('env') === 'development') {
 
 var port = 1337;
 app.listen(port);
-
-var retorono = PagamentoCtrl.verificarSaldo({
-    pagador: "5d10b24219b28e2aa0eecde0",
-    recebedor: "5d10b24a19b28e2aa0eecde1",
-    valor: "10",
-    parcelas: 1
-});
-console.log(retorono);

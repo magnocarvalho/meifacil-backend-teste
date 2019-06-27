@@ -6,13 +6,14 @@
     "scripts": {
         "start": "gulp",
         "debug": "node --nolazy --inspect-brk=9229 bin/index.js",
-        "test": "mocha lib/**/**.spec.js"
+        "test": "mocha test/test.js --timeout 100000"
     },
     "author": "Magno Carvalho",
     "license": "ISC",
     "devDependencies": {
         "chai": "^4.2.0",
         "gulp": "^4.0.2",
+        "gulp-mocha": "^6.0.0",
         "gulp-nodemon": "^2.4.2",
         "gulp-typescript": "^5.0.1",
         "merge2": "^1.2.3",
@@ -26,6 +27,7 @@
         "@types/node": "^12.0.10",
         "async": "^3.1.0",
         "async-waterfall": "^0.1.5",
+        "chai-http": "^4.3.0",
         "compression": "^1.6.0",
         "del": "^4.1.1",
         "dotenv": "^8.0.0",

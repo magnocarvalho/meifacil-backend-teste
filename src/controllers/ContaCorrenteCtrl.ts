@@ -5,7 +5,6 @@ import { ILancamentoModel } from "../model/Lancamento";
 class ContaCorrenteCtrl {
   static create(req: { body: any; }, res: { json: (arg0: any) => void; }, next: (arg0: any) => void) {
     var obj = req.body;
-    //para teste, rota de salva noca contacorrente apenas com valor inicial da conta e nome, nao valida campos.
     ContaCorrenteModel.create(obj, (err: any, data: any) => {
       if (err) next(err);
       else res.json(data);

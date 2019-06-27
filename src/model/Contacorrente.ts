@@ -5,12 +5,12 @@ import { Double, Decimal128 } from 'bson';
 
 export interface IContaCorrenteModel extends IDefault, mongoose.Document {
     id: string;
-    saldo: Double;
+    saldo: Number;
     titular: string;
 }
 
 let schema = {
-    saldo: { type: Decimal128, required: true },
+    saldo: { type: Number, required: true },
     titular: { type: String, required: true }
 };
 
