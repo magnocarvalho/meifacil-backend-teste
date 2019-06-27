@@ -9,7 +9,7 @@ var app = express();
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-mongoose.set('useFindAndModify', false); // bibliotec depreciada
+mongoose.set('useFindAndModify', false); // biblioteca depreciada
 mongoose.connect('mongodb://localhost:27017/meifacil', { useNewUrlParser: true });
 
 
